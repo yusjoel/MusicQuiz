@@ -22,6 +22,14 @@
 
 ---
 
+## AI Agent的问题和功能限制
+
+*   步骤12：只能提供git操作的命令，commit message的建议，不能直接帮助提交
+*   步骤14：遇到了NoSuchMethodError，建议通过更新bom到最新版本（最流行版本）来修改，但最终没有成功。对于没有编程基础的人基本就卡死在这里了
+*   步骤16：遇到免费账号的限制，从Gemini 2.5 Pro 一路降级，直到Default Model
+
+---
+
 ## 与 Agent 的交互记录 (User Prompts)
 
 1.  `我要做一个猜音乐的功能，指定一个本地的文件夹，读取里面所有的mp3格式的音乐。随机播放其中一首音乐的一个片段，然后改出4个选项，让玩家猜测是哪个。`
@@ -34,3 +42,15 @@
 8.  `我希望指定一个存放音乐的路径，如 sdcard/Music`
 9.  (用户隐式地报告了一个代码编译错误，Agent 随后进行了修复)
 10. `为我创建README.md，简要描述这个项目的内容。记录IDE的版本，Gemini的版本，我对Agent说的话。`
+11. `需要支持多语种，至少支持英文和简体中文`
+12. `很好，commit。`
+13. `我需要把随机选择歌曲改成洗牌的方式随机打乱歌曲顺序，直到所有歌曲都被播放过之后，再次洗牌。避免短时间内遇到相同的歌曲多次。`
+14. `Explain: FATAL EXCEPTION: main Process: com.joel.musicquiz, PID: 10523 java.lang.NoSuchMethodError: No virtual method removeFirst()Ljava/lang/Object; in class Landroidx/compose/runtime/snapshots/SnapshotStateList; or its super classes (declaration of '''androidx.compose.runtime.snapshots.SnapshotStateList''' appears in /data/app/~~0HdqwZfl00_l1ZzhFuWf-g==/com.joel.musicquiz-kBOfVKyj5ZIKPdA7UoXQmA==/base.apk) at com.joel.musicquiz.MainActivityKt.QuizScreen$generateNextQuestion(MainActivity.kt:167) at com.joel.musicquiz.MainActivityKt.access$QuizScreen$generateNextQuestion(MainActivity.kt:1) with tag AndroidRuntime`
+15. `为我执行方案2`
+16. `继续继续`
+17. `回答对题目后，直接开始下一题。`
+18. `你理解的有问题，不要去除Toast提示。只在回答正确时，立即执行【播放片段】的操作。继续继续继续`
+19. `回答错误的时候不要停止音乐，不要自动切换到下一题。还是允许玩家继续选择，但是不再加分，直到选对为止。`
+20. `打错后再答对不用提示玩家“答对了，本题不计分”，正常提示玩家“答对了”就行。答对之后立刻播放下一题的歌曲，和正常答对流程一样。分数显示改成 分数/题目数。`
+21. `每次播放歌曲不要从固定时间开始，改成随机的时间，如果播放完毕要循环播放`
+22. `把今天的User Prompts添加到README.md的【与 Agent 的交互记录 (User Prompts)】模块的后面`
