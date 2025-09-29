@@ -25,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -138,20 +139,39 @@ data class QuizQuestion(
     val options: List<Song>
 )
 
-// 生成一个新题目
-fun generateNewQuestion(songs: List<Song>): QuizQuestion? {
-    // 确保有足够的歌曲来创建题目（至少4首）
-    if (songs.size < 4) return null
-    val shuffledSongs = songs.shuffled()
-    val correctSong = shuffledSongs.first()
-    val options = shuffledSongs.take(4).shuffled()
-    return QuizQuestion(correctSong, options)
-}
-
 @Composable
 fun QuizScreen(songs: List<Song>, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val mediaPlayer = remember { MediaPlayer() }
+
+    var currentQuestion by remember { mutableStateOf<QuizQuestion?>(null) }
+    var score by remember { mutableStateOf(0) }
+
+    // This is our shuffled playlist. We use mutableStateListOf to efficiently handle removals.
+    val songQueue = remember { mutableStateListOf<Song>() }
+
+    // Function to generate the next question using the shuffled queue
+    fun generateNextQuestion() {
+        // If the queue is empty, reshuffle all songs and refill it.
+        if (songQueue.isEmpty()) {
+            songQueue.addAll(songs.shuffled())
+        }
+
+        // If there still are no songs, we can't make a question.
+        if (songQueue.isEmpty()) {
+            currentQuestion = null
+            return
+        }
+
+        // Take the next song from the top of the queue.
+        val correctSong = songQueue.removeAt(0)
+
+        // Get 3 other random songs for options, making sure they aren't the correct answer.
+        val wrongOptions = songs.filter { it != correctSong }.shuffled().take(3)
+        val allOptions = (wrongOptions + correctSong).shuffled()
+
+        currentQuestion = QuizQuestion(correctSong, allOptions)
+    }
 
     DisposableEffect(Unit) {
         onDispose {
@@ -159,12 +179,10 @@ fun QuizScreen(songs: List<Song>, modifier: Modifier = Modifier) {
         }
     }
 
-    var currentQuestion by remember { mutableStateOf<QuizQuestion?>(null) }
-    var score by remember { mutableStateOf(0) }
-
+    // When the song list is first loaded, generate the first question.
     LaunchedEffect(songs) {
         if (songs.isNotEmpty()) {
-            currentQuestion = generateNewQuestion(songs)
+            generateNextQuestion()
         }
     }
 
@@ -220,7 +238,8 @@ fun QuizScreen(songs: List<Song>, modifier: Modifier = Modifier) {
                         val correctAnswer = currentQuestion?.correctSong?.title
                         Toast.makeText(context, context.getString(R.string.wrong, correctAnswer), Toast.LENGTH_SHORT).show()
                     }
-                    currentQuestion = generateNewQuestion(songs)
+                    // Generate the next question from our queue
+                    generateNextQuestion()
                 },
                 modifier = Modifier
                     .fillMaxWidth()
