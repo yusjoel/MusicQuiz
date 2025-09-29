@@ -1,3 +1,12 @@
 <resources>
     <string name="app_name">MusicQuiz</string>
+
+    <string name="permission_denied">Permission denied. Cannot load songs.</string>
+    <string name="loading_songs">Loading songs from \'%s\' or waiting for permission...</string>
+    <string name="not_enough_songs">Not enough songs to start the quiz. Please add at least 4 songs to your \'Music\' folder.</string>
+    <string name="score">Score: %d</string>
+    <string name="what_song_is_this">What song is this?</string>
+    <string name="play_snippet">Play Snippet</string>
+    <string name="correct">Correct!</string>
+    <string name="wrong">Wrong! It was %s</string>
 </resources>

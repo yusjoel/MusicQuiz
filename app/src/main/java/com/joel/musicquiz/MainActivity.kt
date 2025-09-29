@@ -31,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -66,7 +67,7 @@ fun MusicQuizApp() {
             songs = loadSongsFromDirectory(musicFolderPath)
         } else {
             // Handle permission denial
-            Toast.makeText(context, "Permission denied. Cannot load songs.", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, context.getString(R.string.permission_denied), Toast.LENGTH_LONG).show()
         }
     }
 
@@ -96,7 +97,7 @@ fun MusicQuizApp() {
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("Loading songs from '$musicFolderPath' or waiting for permission...")
+                Text(stringResource(R.string.loading_songs, musicFolderPath))
             }
         } else {
             QuizScreen(
@@ -175,14 +176,14 @@ fun QuizScreen(songs: List<Song>, modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.Center
     ) {
         if (songs.size < 4) {
-            Text("Not enough songs to start the quiz. Please add at least 4 songs to your 'Music' folder.")
+            Text(stringResource(R.string.not_enough_songs))
             return
         }
 
-        Text("Score: $score")
+        Text(stringResource(R.string.score, score))
         Spacer(modifier = Modifier.height(16.dp))
 
-        Text("What song is this?")
+        Text(stringResource(R.string.what_song_is_this))
         Spacer(modifier = Modifier.height(32.dp))
 
         Button(
@@ -203,7 +204,7 @@ fun QuizScreen(songs: List<Song>, modifier: Modifier = Modifier) {
             },
             enabled = currentQuestion != null
         ) {
-            Text("Play Snippet")
+            Text(stringResource(R.string.play_snippet))
         }
         Spacer(modifier = Modifier.height(32.dp))
 
@@ -214,10 +215,10 @@ fun QuizScreen(songs: List<Song>, modifier: Modifier = Modifier) {
                     val isCorrect = song == currentQuestion?.correctSong
                     if (isCorrect) {
                         score++
-                        Toast.makeText(context, "Correct!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.correct), Toast.LENGTH_SHORT).show()
                     } else {
                         val correctAnswer = currentQuestion?.correctSong?.title
-                        Toast.makeText(context, "Wrong! It was $correctAnswer", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.wrong, correctAnswer), Toast.LENGTH_SHORT).show()
                     }
                     currentQuestion = generateNewQuestion(songs)
                 },
