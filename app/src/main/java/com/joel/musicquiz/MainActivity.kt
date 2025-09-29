@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.joel.musicquiz.ui.theme.MusicQuizTheme
 import java.io.File
+import kotlin.random.Random
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -146,31 +147,67 @@ fun QuizScreen(songs: List<Song>, modifier: Modifier = Modifier) {
 
     var currentQuestion by remember { mutableStateOf<QuizQuestion?>(null) }
     var score by remember { mutableStateOf(0) }
+    var questionsCompleted by remember { mutableStateOf(0) }
+    var hasMadeWrongAttemptInCurrentQuestion by remember { mutableStateOf(false) }
 
-    // This is our shuffled playlist. We use mutableStateListOf to efficiently handle removals.
+    var activeSongPathForLooping by remember { mutableStateOf<String?>(null) }
+    var activeSnippetStartPositionForLooping by remember { mutableStateOf(0) }
+
     val songQueue = remember { mutableStateListOf<Song>() }
 
-    // Function to generate the next question using the shuffled queue
-    fun generateNextQuestion() {
-        // If the queue is empty, reshuffle all songs and refill it.
+    fun playSongSnippet(songPath: String, isNewRandomStartNeeded: Boolean) {
+        try {
+            if (isNewRandomStartNeeded || activeSongPathForLooping != songPath) {
+                mediaPlayer.reset()
+                mediaPlayer.setDataSource(songPath)
+                mediaPlayer.setOnPreparedListener { mp ->
+                    val songDuration = mp.duration
+                    val typicalSnippetDurationMs = 15000 // 15 seconds
+
+                    val maxPossibleRandomStart = if (songDuration > typicalSnippetDurationMs) songDuration - typicalSnippetDurationMs else 0
+                    activeSnippetStartPositionForLooping = if (maxPossibleRandomStart > 0) Random.nextInt(0, maxPossibleRandomStart) else 0
+                    activeSongPathForLooping = songPath
+
+                    mp.seekTo(activeSnippetStartPositionForLooping)
+                    mp.start()
+                }
+                mediaPlayer.setOnCompletionListener { mp ->
+                    mp.seekTo(activeSnippetStartPositionForLooping)
+                    mp.start()
+                }
+                mediaPlayer.prepareAsync()
+            } else {
+                // Same song, snippet start position already determined, just play/resume for loop or replay
+                if (!mediaPlayer.isPlaying) {
+                    mediaPlayer.seekTo(activeSnippetStartPositionForLooping)
+                    mediaPlayer.start()
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            activeSongPathForLooping = null // Reset on error to avoid inconsistent state
+        }
+    }
+
+    fun generateNextQuestionAndPlayIfNeeded(playNext: Boolean) {
         if (songQueue.isEmpty()) {
             songQueue.addAll(songs.shuffled())
         }
-
-        // If there still are no songs, we can't make a question.
         if (songQueue.isEmpty()) {
             currentQuestion = null
             return
         }
-
-        // Take the next song from the top of the queue.
         val correctSong = songQueue.removeAt(0)
-
-        // Get 3 other random songs for options, making sure they aren't the correct answer.
         val wrongOptions = songs.filter { it != correctSong }.shuffled().take(3)
         val allOptions = (wrongOptions + correctSong).shuffled()
-
         currentQuestion = QuizQuestion(correctSong, allOptions)
+        hasMadeWrongAttemptInCurrentQuestion = false
+
+        if (playNext) {
+            currentQuestion?.correctSong?.let { song ->
+                playSongSnippet(song.path, isNewRandomStartNeeded = true)
+            }
+        }
     }
 
     DisposableEffect(Unit) {
@@ -179,10 +216,11 @@ fun QuizScreen(songs: List<Song>, modifier: Modifier = Modifier) {
         }
     }
 
-    // When the song list is first loaded, generate the first question.
     LaunchedEffect(songs) {
         if (songs.isNotEmpty()) {
-            generateNextQuestion()
+            generateNextQuestionAndPlayIfNeeded(false)
+            questionsCompleted = 0 
+            score = 0 
         }
     }
 
@@ -198,7 +236,7 @@ fun QuizScreen(songs: List<Song>, modifier: Modifier = Modifier) {
             return
         }
 
-        Text(stringResource(R.string.score, score))
+        Text(stringResource(R.string.score, score, questionsCompleted))
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(stringResource(R.string.what_song_is_this))
@@ -206,18 +244,9 @@ fun QuizScreen(songs: List<Song>, modifier: Modifier = Modifier) {
 
         Button(
             onClick = {
-                currentQuestion?.correctSong?.path?.let { path ->
-                    try {
-                        mediaPlayer.reset()
-                        mediaPlayer.setDataSource(path)
-                        mediaPlayer.prepareAsync()
-                        mediaPlayer.setOnPreparedListener { mp ->
-                            mp.seekTo(15000)
-                            mp.start()
-                        }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
+                currentQuestion?.correctSong?.let { songToPlay ->
+                    val newRandomStartNeeded = activeSongPathForLooping != songToPlay.path
+                    playSongSnippet(songToPlay.path, isNewRandomStartNeeded = newRandomStartNeeded)
                 }
             },
             enabled = currentQuestion != null
@@ -229,17 +258,19 @@ fun QuizScreen(songs: List<Song>, modifier: Modifier = Modifier) {
         currentQuestion?.options?.forEach { song ->
             Button(
                 onClick = {
-                    mediaPlayer.stop()
                     val isCorrect = song == currentQuestion?.correctSong
                     if (isCorrect) {
-                        score++
+                        mediaPlayer.stop() // Stop current playback before moving on
                         Toast.makeText(context, context.getString(R.string.correct), Toast.LENGTH_SHORT).show()
+                        if (!hasMadeWrongAttemptInCurrentQuestion) {
+                            score++
+                        }
+                        questionsCompleted++
+                        generateNextQuestionAndPlayIfNeeded(playNext = true)
                     } else {
-                        val correctAnswer = currentQuestion?.correctSong?.title
-                        Toast.makeText(context, context.getString(R.string.wrong, correctAnswer), Toast.LENGTH_SHORT).show()
+                        hasMadeWrongAttemptInCurrentQuestion = true
+                        Toast.makeText(context, context.getString(R.string.wrong_try_again), Toast.LENGTH_SHORT).show()
                     }
-                    // Generate the next question from our queue
-                    generateNextQuestion()
                 },
                 modifier = Modifier
                     .fillMaxWidth()

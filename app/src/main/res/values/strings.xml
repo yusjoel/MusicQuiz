@@ -4,9 +4,12 @@
     <string name="permission_denied">Permission denied. Cannot load songs.</string>
     <string name="loading_songs">Loading songs from \'%s\' or waiting for permission...</string>
     <string name="not_enough_songs">Not enough songs to start the quiz. Please add at least 4 songs to your \'Music\' folder.</string>
-    <string name="score">Score: %d</string>
+    <string name="score">Score: %1$d / %2$d</string>
     <string name="what_song_is_this">What song is this?</string>
     <string name="play_snippet">Play Snippet</string>
     <string name="correct">Correct!</string>
-    <string name="wrong">Wrong! It was %s</string>
+    <string name="wrong_try_again">Wrong! Try again.</string>
+    <!-- The original "wrong" string might be less used now, or repurposed if we show the answer after giving up -->
+    <string name="wrong_reveal_answer">The correct answer was: %s</string>
+
 </resources>

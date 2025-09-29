@@ -4,9 +4,12 @@
     <string name="permission_denied">权限被拒绝，无法加载歌曲。</string>
     <string name="loading_songs">正在从 \'%s\' 加载歌曲或等待权限...</string>
     <string name="not_enough_songs">歌曲数量不足，无法开始竞猜。请在您的“音乐”文件夹中至少添加4首歌曲。</string>
-    <string name="score">分数: %d</string>
+    <string name="score">分数: %1$d / %2$d</string>
     <string name="what_song_is_this">这是什么歌？</string>
     <string name="play_snippet">播放片段</string>
     <string name="correct">正确！</string>
+    <string name="wrong_try_again">错误！请重试。</string>
+    <string name="wrong_reveal_answer">正确答案是：%s</string>
+    <!-- The original "wrong" string is kept for now, though its usage might change with the new logic -->
     <string name="wrong">错误！答案是 %s</string>
 </resources>
